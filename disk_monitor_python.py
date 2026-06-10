@@ -88,10 +88,16 @@ def generate_summary_report(event_handler, monitor_dir, log_file):
         print("未记录到任何文件创建事件。")
         return
     
-    # 按文件夹归类
+    # 按文件夹归类（往上层三个文件夹）
+    def get_parent_n(path, n):
+        """获取上n层目录"""
+        for _ in range(n):
+            path = os.path.dirname(path)
+        return path
+    
     folder_stats = {}  # {folder: {'count': 0, 'size': 0}}
     for file_path, file_size in event_handler.files:
-        folder = os.path.dirname(file_path)
+        folder = get_parent_n(file_path, 3)  # 往上三层
         if folder not in folder_stats:
             folder_stats[folder] = {'count': 0, 'size': 0}
         folder_stats[folder]['count'] += 1
@@ -135,8 +141,11 @@ def generate_summary_report(event_handler, monitor_dir, log_file):
 def main():
     # 获取脚本所在目录和开始时间戳
     script_dir = os.path.dirname(os.path.abspath(__file__))
+    log_dir = os.path.join(script_dir, 'log')
+    # 确保log目录存在
+    os.makedirs(log_dir, exist_ok=True)
     start_time_stamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-    default_log_file = os.path.join(script_dir, f'disk_monitor_python_{start_time_stamp}.log')
+    default_log_file = os.path.join(log_dir, f'disk_monitor_python_{start_time_stamp}.log')
     
     parser = argparse.ArgumentParser(description='磁盘空间监控脚本（Python版）')
     parser.add_argument('monitor_dir', nargs='?', default='/Users',
@@ -177,7 +186,8 @@ def main():
             time.sleep(args.latency)
     except KeyboardInterrupt:
         print("\n监控已停止。")
-        print(f"日志已保存到: {args.log_file}")
+        # 生成总结报告
+        generate_summary_report(event_handler, args.monitor_dir, args.log_file)
         observer.stop()
     
     observer.join()

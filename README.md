@@ -13,8 +13,10 @@ disk-monitor-project/
 ├── disk_monitor_python.py   # Python版脚本（推荐）
 ├── disk_monitor_readme.txt  # 原始使用说明
 ├── disk_monitor_readme_all.txt # 综合说明文档
-├── disk_monitor_simple.log  # 测试日志示例
-└── README.md               # 本文件
+├── DESCRIPTION.md           # 项目简介（中文）
+├── DESCRIPTION_EN.md        # 项目简介（英文）
+├── README.md               # 本文件（中文）
+└── README_EN.md            # 英文版说明
 ```
 
 ## 🚀 快速开始
@@ -31,6 +33,12 @@ python3 disk_monitor_python.py ~/Downloads
 # 监控临时目录
 python3 disk_monitor_python.py /tmp
 ```
+
+**日志文件说明：**
+- 日志文件默认保存在脚本所在目录的 `log/` 子文件夹中，文件名包含开始运行的时间戳
+- 例如：`log/disk_monitor_python_20260610_144200.log`
+- `log/` 目录会自动创建，无需手动创建
+- 当按 `Ctrl+C` 停止脚本时，会自动生成总结报告，按文件夹归类统计创建的文件大小
 
 ### 备选方案：简化版脚本（无需任何依赖）
 
@@ -103,6 +111,23 @@ chmod +x disk_monitor_simple.sh
 时间,文件路径,文件大小(字节),文件大小(可读),事件类型
 2026-06-10 12:30:45,/Users/username/Downloads/file.pdf,1048576,1.00MB,创建
 ```
+
+## 📊 总结报告
+
+当按 `Ctrl+C` 停止脚本时，会自动生成总结报告，包含：
+- 监控时间范围
+- 创建文件总数和总大小
+- 按上三层文件夹归类的统计表格，显示每个文件夹中创建的文件数量和总大小
+
+总结报告会追加到日志文件末尾，格式如下：
+```csv
+文件夹路径,文件数量,总大小(字节),总大小(可读)
+/Users/username,8,52428800,50.00MB
+/Users/username/Downloads,5,31457280,30.00MB
+/Users/username/Documents,3,20971520,20.00MB
+```
+
+**说明**：归类逻辑为往上三层目录。例如，文件路径 `/Users/username/Downloads/subfolder/file.txt` 会归类到 `/Users/username`（上三层）。
 
 ## 📈 日志分析示例
 

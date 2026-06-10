@@ -9,8 +9,10 @@ set -e
 # 配置参数
 MONITOR_DIR="${1:-/Users}"  # 默认监控/Users目录
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"  # 脚本所在目录
+LOG_DIR="$SCRIPT_DIR/log"  # 日志目录
+mkdir -p "$LOG_DIR"  # 确保日志目录存在
 START_TIME_STAMP=$(date "+%Y%m%d_%H%M%S")  # 开始时间戳，用于文件名
-LOG_FILE="${2:-$SCRIPT_DIR/disk_monitor_simple_${START_TIME_STAMP}.log}"
+LOG_FILE="${2:-$LOG_DIR/disk_monitor_simple_${START_TIME_STAMP}.log}"
 SCAN_INTERVAL=5  # 扫描间隔（秒）
 
 # 记录脚本开始时间
@@ -67,10 +69,23 @@ cleanup() {
         echo ""
         echo "按文件夹归类统计:"
         echo "文件夹路径,文件数量,总大小(字节),总大小(可读)"
-        # 使用awk按文件夹归类
+        # 使用awk按文件夹归类（往上层三个文件夹）
         awk '{
-            folder = $1
-            sub(/\/[^\/]*$/, "", folder)  # 提取文件夹部分
+            path = $1
+            # 移除文件名，获取文件夹路径
+            sub(/\/[^\/]*$/, "", path)
+            # 按 "/" 分割路径
+            n = split(path, parts, "/")
+            # 获取上三层文件夹（如果路径深度足够）
+            if (n >= 3) {
+                folder = parts[1] "/" parts[2] "/" parts[3]
+                # 如果 parts[1] 是空字符串（根目录），需要调整
+                if (parts[1] == "") {
+                    folder = "/" parts[2] "/" parts[3]
+                }
+            } else {
+                folder = path
+            }
             sizes[folder] += $2
             counts[folder]++
         }

@@ -11,8 +11,10 @@ disk-monitor-project/
 ├── disk_monitor_python.py   # Python script (recommended)
 ├── disk_monitor_readme.txt  # Original usage instructions
 ├── disk_monitor_readme_all.txt # Comprehensive documentation
-├── disk_monitor_simple.log  # Sample test log
-└── README.md               # This file
+├── DESCRIPTION.md           # Project description (Chinese)
+├── DESCRIPTION_EN.md        # Project description (English)
+├── README.md               # Main documentation (Chinese)
+└── README_EN.md            # This file (English)
 ```
 
 ## 🚀 Quick Start
@@ -29,6 +31,12 @@ python3 disk_monitor_python.py ~/Downloads
 # Monitor temporary directory
 python3 disk_monitor_python.py /tmp
 ```
+
+**Log file notes:**
+- Log files are saved in the `log/` subdirectory within the script's directory, with a timestamp in the filename
+- Example: `log/disk_monitor_python_20260610_144200.log`
+- The `log/` directory is created automatically, no manual setup needed
+- When stopping with `Ctrl+C`, a summary report is automatically generated, categorizing created files by folder
 
 ### Alternative: Simplified Script (No dependencies required)
 
@@ -101,6 +109,23 @@ All scripts generate CSV format logs:
 Time,File Path,File Size (bytes),File Size (readable),Event Type
 2026-06-10 12:30:45,/Users/username/Downloads/file.pdf,1048576,1.00MB,Created
 ```
+
+## 📊 Summary Report
+
+When stopping with `Ctrl+C`, a summary report is automatically generated, containing:
+- Monitoring time range
+- Total number and size of created files
+- A table categorizing files by the top three levels of folders, showing the number of files and total size per folder
+
+The summary report is appended to the log file with the following format:
+```csv
+Folder Path,File Count,Total Size (bytes),Total Size (readable)
+/Users/username,8,52428800,50.00MB
+/Users/username/Downloads,5,31457280,30.00MB
+/Users/username/Documents,3,20971520,20.00MB
+```
+
+**Note**: The categorization logic uses the top three levels of directories. For example, the file path `/Users/username/Downloads/subfolder/file.txt` will be categorized under `/Users/username` (top three levels).
 
 ## 📈 Log Analysis Examples
 
