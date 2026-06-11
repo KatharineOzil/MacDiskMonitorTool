@@ -88,16 +88,37 @@ def generate_summary_report(event_handler, monitor_dir, log_file):
         print("未记录到任何文件创建事件。")
         return
     
-    # 按文件夹归类（往上层三个文件夹）
-    def get_parent_n(path, n):
-        """获取上n层目录"""
-        for _ in range(n):
-            path = os.path.dirname(path)
-        return path
+    # 按文件夹归类（分段式）
+    # Containers → 9段, Application Support → 7段, Library其他 → 5段, 用户目录 → 4段
+    def get_folder_for_group(path):
+        """获取归类用的文件夹路径"""
+        folder = os.path.dirname(path)
+        parts = folder.split(os.sep)
+        # 去掉开头的空字符串（根目录split后产生）
+        if parts and parts[0] == '':
+            parts = parts[1:]
+            prefix = os.sep
+        else:
+            prefix = ''
+        full_path = prefix + os.sep.join(parts)
+        # 根据路径模式选择截取深度
+        if '/Library/Containers/' in full_path:
+            depth = 9
+        elif '/Library/Application Support/' in full_path:
+            depth = 7
+        elif '/Library/' in full_path:
+            depth = 5
+        else:
+            depth = 4
+        # 截取到指定深度
+        if len(parts) <= depth:
+            return folder
+        else:
+            return prefix + os.sep.join(parts[:depth])
     
     folder_stats = {}  # {folder: {'count': 0, 'size': 0}}
     for file_path, file_size in event_handler.files:
-        folder = get_parent_n(file_path, 3)  # 往上三层
+        folder = get_folder_for_group(file_path)
         if folder not in folder_stats:
             folder_stats[folder] = {'count': 0, 'size': 0}
         folder_stats[folder]['count'] += 1
@@ -107,16 +128,9 @@ def generate_summary_report(event_handler, monitor_dir, log_file):
     total_size = sum(stats['size'] for stats in folder_stats.values())
     total_count = len(event_handler.files)
     
-    # 生成可读大小
-    def format_size(size_bytes):
-        if size_bytes >= 1073741824:
-            return f"{size_bytes / 1073741824:.2f}GB"
-        elif size_bytes >= 1048576:
-            return f"{size_bytes / 1048576:.2f}MB"
-        elif size_bytes >= 1024:
-            return f"{size_bytes / 1024:.2f}KB"
-        else:
-            return f"{size_bytes}B"
+    # 统一转换为MB
+    def format_size_mb(size_bytes):
+        return f"{size_bytes / 1048576:.2f}MB"
     
     # 写入总结报告到日志文件
     with open(log_file, 'a', encoding='utf-8') as f:
@@ -127,13 +141,13 @@ def generate_summary_report(event_handler, monitor_dir, log_file):
         f.write(f"监控时间: {event_handler.start_time.strftime('%Y-%m-%d %H:%M:%S')} 至 {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"监控目录: {monitor_dir}\n")
         f.write(f"创建文件总数: {total_count}\n")
-        f.write(f"创建文件总大小: {total_size} 字节 ({format_size(total_size)})\n")
+        f.write(f"创建文件总大小: {format_size_mb(total_size)} ({total_size} 字节)\n")
         f.write("\n按文件夹归类统计:\n")
-        f.write("文件夹路径,文件数量,总大小(字节),总大小(可读)\n")
+        f.write("文件夹路径,文件数量,总大小(字节),总大小(MB)\n")
         for folder, stats in folder_stats.items():
             count = stats['count']
             size = stats['size']
-            readable_size = format_size(size)
+            readable_size = format_size_mb(size)
             f.write(f"{folder},{count},{size},{readable_size}\n")
     
     print("总结报告已生成。")

@@ -116,18 +116,23 @@ chmod +x disk_monitor_simple.sh
 
 当按 `Ctrl+C` 停止脚本时，会自动生成总结报告，包含：
 - 监控时间范围
-- 创建文件总数和总大小
-- 按上三层文件夹归类的统计表格，显示每个文件夹中创建的文件数量和总大小
+- 创建文件总数和总大小（MB）
+- 按文件夹归类的统计表格（大小统一为MB），显示每个文件夹中创建的文件数量和总大小
 
-总结报告会追加到日志文件末尾，格式如下：
+总结报告会追加到日志文件末尾，所有大小统一以 **MB** 显示：
 ```csv
-文件夹路径,文件数量,总大小(字节),总大小(可读)
-/Users/username,8,52428800,50.00MB
-/Users/username/Downloads,5,31457280,30.00MB
-/Users/username/Documents,3,20971520,20.00MB
+文件夹路径,文件数量,总大小(字节),总大小(MB)
+/Users/username/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support,3158,xxxxx,xx.xxMB
+/Users/username/Library/Application Support/AddressBook/Metadata,628,xxxxx,xx.xxMB
+/Users/username/Library/Preferences,112,xxxxx,xx.xxMB
+/Users/username/Desktop,5,xxxxx,xx.xxMB
 ```
 
-**说明**：归类逻辑为往上三层目录。例如，文件路径 `/Users/username/Downloads/subfolder/file.txt` 会归类到 `/Users/username`（上三层）。
+**归类逻辑（分段式）**：
+- Containers 路径 → 截取前9段（区分应用+数据类型，如 `.../com.tencent.xinWeChat/Data/Library/Application Support`）
+- Application Support 路径 → 截取前7段（如 `.../Application Support/AddressBook/Metadata`）
+- Library 其他路径 → 截取前5段（如 `.../Library/Preferences`）
+- 用户目录路径 → 截取前4段（如 `.../Desktop`）
 
 ## 📈 日志分析示例
 

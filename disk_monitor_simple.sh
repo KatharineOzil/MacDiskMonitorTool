@@ -65,26 +65,40 @@ cleanup() {
         echo "监控时间: $START_TIME 至 $(date "+%Y-%m-%d %H:%M:%S")"
         echo "监控目录: $MONITOR_DIR"
         echo "创建文件总数: $(wc -l < "$FILE_LIST")"
-        echo "创建文件总大小: $(awk '{sum+=$2} END {print sum}' "$FILE_LIST") 字节"
+        echo "创建文件总大小: $(awk '{sum+=$2} END {printf "%.2fMB", sum/1048576}' "$FILE_LIST")"
         echo ""
         echo "按文件夹归类统计:"
         echo "文件夹路径,文件数量,总大小(字节),总大小(可读)"
-        # 使用awk按文件夹归类（往上层三个文件夹）
+        # 使用awk按文件夹归类（分段式）
+        # Containers → 9段, Application Support → 7段, Library其他 → 5段, 用户目录 → 4段
         awk '{
             path = $1
-            # 移除文件名，获取文件夹路径
             sub(/\/[^\/]*$/, "", path)
-            # 按 "/" 分割路径
             n = split(path, parts, "/")
-            # 获取上三层文件夹（如果路径深度足够）
-            if (n >= 3) {
-                folder = parts[1] "/" parts[2] "/" parts[3]
-                # 如果 parts[1] 是空字符串（根目录），需要调整
-                if (parts[1] == "") {
-                    folder = "/" parts[2] "/" parts[3]
-                }
+            # 根据路径模式选择截取深度
+            if (path ~ /\/Library\/Containers\//) {
+                depth = 9
+            } else if (path ~ /\/Library\/Application Support\//) {
+                depth = 7
+            } else if (path ~ /\/Library\//) {
+                depth = 5
             } else {
+                depth = 4
+            }
+            # 截取到指定深度
+            if (n <= depth) {
                 folder = path
+            } else {
+                folder = ""
+                for (i = 1; i <= depth; i++) {
+                    if (i == 1 && parts[i] == "") {
+                        folder = "/"
+                    } else if (i > 1 && parts[i] != "") {
+                        folder = folder "/" parts[i]
+                    } else {
+                        folder = folder parts[i]
+                    }
+                }
             }
             sizes[folder] += $2
             counts[folder]++
@@ -93,16 +107,8 @@ cleanup() {
             for (folder in sizes) {
                 size = sizes[folder]
                 count = counts[folder]
-                # 转换为可读格式
-                if (size >= 1073741824) {
-                    readable = sprintf("%.2fGB", size/1073741824)
-                } else if (size >= 1048576) {
-                    readable = sprintf("%.2fMB", size/1048576)
-                } else if (size >= 1024) {
-                    readable = sprintf("%.2fKB", size/1024)
-                } else {
-                    readable = size "B"
-                }
+                # 统一转换为MB
+                readable = sprintf("%.2fMB", size/1048576)
                 printf "%s,%d,%d,%s\n", folder, count, size, readable
             }
         }' "$FILE_LIST"

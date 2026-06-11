@@ -114,18 +114,23 @@ Time,File Path,File Size (bytes),File Size (readable),Event Type
 
 When stopping with `Ctrl+C`, a summary report is automatically generated, containing:
 - Monitoring time range
-- Total number and size of created files
-- A table categorizing files by the top three levels of folders, showing the number of files and total size per folder
+- Total number and size of created files (in MB)
+- A table categorizing files by folder (sizes in MB), showing the number of files and total size per folder
 
-The summary report is appended to the log file with the following format:
+The summary report is appended to the log file, with all sizes displayed in **MB**:
 ```csv
-Folder Path,File Count,Total Size (bytes),Total Size (readable)
-/Users/username,8,52428800,50.00MB
-/Users/username/Downloads,5,31457280,30.00MB
-/Users/username/Documents,3,20971520,20.00MB
+Folder Path,File Count,Total Size (bytes),Total Size (MB)
+/Users/username/Library/Containers/com.tencent.xinWeChat/Data/Library/Application Support,3158,xxxxx,xx.xxMB
+/Users/username/Library/Application Support/AddressBook/Metadata,628,xxxxx,xx.xxMB
+/Users/username/Library/Preferences,112,xxxxx,xx.xxMB
+/Users/username/Desktop,5,xxxxx,xx.xxMB
 ```
 
-**Note**: The categorization logic uses the top three levels of directories. For example, the file path `/Users/username/Downloads/subfolder/file.txt` will be categorized under `/Users/username` (top three levels).
+**Categorization logic (segmented)**:
+- Containers paths → truncate to 9 segments (identify app + data type, e.g. `.../com.tencent.xinWeChat/Data/Library/Application Support`)
+- Application Support paths → truncate to 7 segments (e.g. `.../Application Support/AddressBook/Metadata`)
+- Other Library paths → truncate to 5 segments (e.g. `.../Library/Preferences`)
+- User directory paths → truncate to 4 segments (e.g. `.../Desktop`)
 
 ## 📈 Log Analysis Examples
 
